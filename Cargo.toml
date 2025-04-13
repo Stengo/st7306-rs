@@ -13,9 +13,21 @@ keywords = ["st7306", "display", "embedded-graphics", "no-std"]
 categories = ["no-std", "no-std::no-alloc", "embedded"]
 
 [dependencies]
-embassy-nrf = "0.3.1"
 embedded-hal = "1.0.0"
 nb = "1.1"
+
+[dependencies.embassy-nrf]
+git = "https://github.com/embassy-rs/embassy.git"
+version = "0.3.1"
+features = [
+  "defmt",
+  "nrf52840",
+  "time-driver-rtc1",
+  "gpiote",
+  "unstable-pac",
+  "time",
+  "nfc-pins-as-gpio",
+]
 
 [dependencies.embedded-graphics]
 version = "0.8"

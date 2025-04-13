@@ -98,14 +98,15 @@ impl FpsConfig {
 }
 
 /// ST7306 driver to connect to TFT displays.
-pub struct ST7306<SPI, DC, CS, RST, const COLS: usize, const ROWS: usize>
+pub struct ST7306<'a, SPI, DC, CS, RST, const COLS: usize, const ROWS: usize>
 where
+    SPI: Instance,
     DC: OutputPin,
     CS: OutputPin,
     RST: OutputPin,
 {
     /// SPI
-    pub spi: Spim<'d, SPI>,
+    pub spi: Spim<'a, SPI>,
 
     /// Data/command pin.
     pub dc: DC,
@@ -156,7 +157,7 @@ pub enum Orientation {
     LandscapeSwapped = 0xA0,
 }
 
-impl<SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> ST7306<SPI, DC, CS, RST, COLS, ROWS>
+impl<'a, SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> ST7306<'a, SPI, DC, CS, RST, COLS, ROWS>
 where
     SPI: Instance,
     DC: OutputPin,
@@ -165,7 +166,7 @@ where
 {
     /// Creates a new driver instance that uses hardware SPI.
     pub fn new(
-        spi: Spim<'d, SPI>,
+        spi: Spim<'a, SPI>,
         dc: DC,
         cs: CS,
         rst: RST,
@@ -558,7 +559,7 @@ where
     pub fn write_command(&mut self, command: Instruction, params: &[u8]) -> Result<(), ()> {
         self.cs.set_low().map_err(|_| ())?;
         self.dc.set_low().map_err(|_| ())?;
-        self.spi.write(&[command as u8]).map_err(|_| ())?;
+        self.spi.write(&[command as u8]);
         if !params.is_empty() {
             self.start_data()?;
             self.write_command_data(params)?;
@@ -581,7 +582,7 @@ where
     /// Either the command ID or the parameters.
     fn write_command_data(&mut self, data: &[u8]) -> Result<(), ()> {
         data.iter().try_fold((), |res, byte| {
-            self.spi.write(&[*byte]).map_err(|_| ())?;
+            self.spi.write(&[*byte]);
             Ok(res)
         })
     }
@@ -595,9 +596,9 @@ where
     /// parameter accepts a slice of u8 triples.
     pub fn write_ram(&mut self, data: &[(u8, u8, u8)]) -> Result<(), ()> {
         data.iter().try_fold((), |res, (first, second, third)| {
-            self.spi.write(&[*first]).map_err(|_| ())?;
-            self.spi.write(&[*second]).map_err(|_| ())?;
-            self.spi.write(&[*third]).map_err(|_| ())?;
+            self.spi.write(&[*first]);
+            self.spi.write(&[*second]);
+            self.spi.write(&[*third]);
             Ok(res)
         })
     }
@@ -704,10 +705,10 @@ fn col_to_bright(color: Rgb565) -> u8 {
 
 #[cfg(feature = "graphics")]
 // TODO: Remove color support from here
-impl<SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> DrawTarget
-    for ST7306<SPI, DC, CS, RST, COLS, ROWS>
+impl<'a, SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> DrawTarget
+    for ST7306<'a, SPI, DC, CS, RST, COLS, ROWS>
 where
-    SPI: SpiDevice,
+    SPI: Instance,
     DC: OutputPin,
     CS: OutputPin,
     RST: OutputPin,
@@ -779,10 +780,10 @@ where
 }
 
 #[cfg(feature = "graphics")]
-impl<SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> OriginDimensions
-    for ST7306<SPI, DC, CS, RST, COLS, ROWS>
+impl<'a, SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> OriginDimensions
+    for ST7306<'a, SPI, DC, CS, RST, COLS, ROWS>
 where
-    SPI: SpiDevice,
+    SPI: Instance,
     DC: OutputPin,
     CS: OutputPin,
     RST: OutputPin,
