@@ -20,6 +20,7 @@ use crate::instruction::Instruction;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::OutputPin;
 use embedded_hal::spi::SpiDevice;
+use embassy_nrf::spim::{Error, Instance, Spim};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PowerMode {
@@ -104,7 +105,7 @@ where
     RST: OutputPin,
 {
     /// SPI
-    pub spi: SPI,
+    pub spi: Spim<'d, SPI>,
 
     /// Data/command pin.
     pub dc: DC,
@@ -157,14 +158,14 @@ pub enum Orientation {
 
 impl<SPI, DC, CS, RST, const COLS: usize, const ROWS: usize> ST7306<SPI, DC, CS, RST, COLS, ROWS>
 where
-    SPI: SpiDevice,
+    SPI: Instance,
     DC: OutputPin,
     CS: OutputPin,
     RST: OutputPin,
 {
     /// Creates a new driver instance that uses hardware SPI.
     pub fn new(
-        spi: SPI,
+        spi: Spim<'d, SPI>,
         dc: DC,
         cs: CS,
         rst: RST,
